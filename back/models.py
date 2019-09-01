@@ -86,11 +86,8 @@ class UserChat(Base, TimeUUIDHashId):
     chat = Column(sqla.String(8), nullable=False)
 
 
-def get_session():
-    engine = ConnectionDB.get_engine(
-        "bigquery://quachat/test_dataset",
-        credentials_path="/home/sanin/pycharm-projects/qua/gcp-auth.json",
-    )
+def get_session(url: str = None):
+    engine = ConnectionDB.get_engine(url)
     Base.metadata = ConnectionDB.get_meta()
     Base.metadata.reflect(engine)
 
