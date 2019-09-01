@@ -86,9 +86,9 @@ class RPC:
 
         if last:
             query = cls.session.query(Message).\
-                        filter(*filters).\
-                        order_by(Message.created.desc()).\
-                        limit(last).all()
+                filter(*filters).\
+                order_by(Message.created.desc()).\
+                limit(last).all()
             return list(reversed(model_query_to_dicts(query)))
 
         if start:

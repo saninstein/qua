@@ -23,7 +23,7 @@ class Base:
                 return datetime.timestamp(val)
             return val
 
-        return {column.name: prepare_val(getattr(self, column.name)) for column in  self.__table__.columns}
+        return {column.name: prepare_val(getattr(self, column.name)) for column in self.__table__.columns}
 
     def __str__(self):
         return f'<{type(self).__name__} {" ".join(f"{k}={v}" for k, v in self.to_dict().items())}>'
@@ -98,30 +98,3 @@ def get_session():
     session.configure(bind=engine)
 
     return session()
-
-
-if __name__ == '__main__':
-    engine = ConnectionDB.get_engine(
-        "bigquery://quachat/test_dataset",
-        credentials_path="/home/sanin/pycharm-projects/qua/gcp-auth.json",
-    )
-    meta = ConnectionDB.get_meta()
-
-    Base.metadata = ConnectionDB.get_meta()
-    Base.metadata.reflect(engine)
-
-    from sqlalchemy.orm import sessionmaker
-
-    session = sessionmaker()
-    session.configure(bind=engine)
-
-    s = session()
-    # ba83d3727974f59a81de0fc80daa308d
-
-    # msg = s.query(Message).first()
-    # print(msg)
-    # print(msg.to_dict())
-
-    # r = s.query(Chat).join(UserChat, UserChat.chat == Chat.id).join(User, UserChat.user == 'a').all()
-
-    print(r)
