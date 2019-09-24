@@ -62,7 +62,8 @@ class Message(Base, TimeUUIDHashId):
 
     text = Column(sqla.String(4096), nullable=False)
     chat = Column(sqla.String(8), nullable=False)
-    created = Column(sqla.TIMESTAMP, default=lambda: str(datetime.utcnow()), nullable=False)
+    # created = Column(sqla.TIMESTAMP, default=lambda: str(datetime.utcnow()), nullable=False)
+    created = Column(sqla.DATETIME, default=datetime.utcnow, nullable=False)
     author = Column(sqla.String, nullable=False)
 
 
@@ -86,8 +87,8 @@ class UserChat(Base, TimeUUIDHashId):
     chat = Column(sqla.String(8), nullable=False)
 
 
-def get_session(url: str = None):
-    engine = ConnectionDB.get_engine(url)
+def get_session(url: str = None, **kwargs):
+    engine = ConnectionDB.get_engine(url, **kwargs)
     Base.metadata = ConnectionDB.get_meta()
     Base.metadata.reflect(engine)
 

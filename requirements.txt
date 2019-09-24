@@ -1,0 +1,5 @@
+json-rpc==1.12.1
+Flask==1.0.3
+Flask-Cors==3.0.8
+nickname-generator==1.0.1
+pybigquery==0.4.10

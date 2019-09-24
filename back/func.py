@@ -21,7 +21,7 @@ class RPC:
     user: User = None
 
     @classmethod
-    def init(cls, db_uri: str = None, user_token: str = None):
+    def init(cls, db_uri: str = None, engine_kwargs: dict = None, user_token: str = None):
         """
         Init func. init sqla session and user
         :return:
@@ -31,7 +31,7 @@ class RPC:
                 'DB_URI',
                 'bigquery://quachat/test_dataset?credentials_path=/home/sanin/pycharm-projects/qua/gcp-auth.json'
             )
-        cls.session: Session = get_session(db_uri)
+        cls.session: Session = get_session(db_uri, **(engine_kwargs or {}))
         cls.user = cls.get_user(user_token) if user_token else None
 
     @classmethod
