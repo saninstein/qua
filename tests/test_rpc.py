@@ -9,6 +9,7 @@ TEST_USER = 'test_user'
 TEST_TOKEN = 'test_token'
 DB_URI = 'sqlite:///'
 
+
 @pytest.fixture
 def rpc():
     engine = create_engine(DB_URI)
@@ -51,7 +52,7 @@ def test__func_list_chats(rpc):
 
 
 def test__func_create_message(rpc, test_chat_name='chat', test_text='text'):
-    chat_id = RPC.create_chat(test_chat_name)
+    chat_id = rpc.create_chat(test_chat_name)
 
     msg_id = rpc.create_message(chat_id, test_text)
 
@@ -60,3 +61,44 @@ def test__func_create_message(rpc, test_chat_name='chat', test_text='text'):
     assert msg.text == test_text
     assert msg.chat == chat_id
     assert msg.author == rpc.user.name
+
+
+def test__list_messages(rpc, test_chat_name='chat', test_text='text'):
+    chat_id = rpc.create_chat(test_chat_name)
+    msg_id = rpc.create_message(chat_id, test_text)
+
+    msg = rpc.list_messages(chat_id)[0]
+    assert msg_id == msg['id']
+    assert test_text == msg['text']
+
+
+def test__join_chat(rpc, test_chat_name='chat'):
+    chat_id = rpc.create_chat(test_chat_name)
+    assert rpc.join_chat(chat_id)
+
+    user_chats = list(rpc.session.query(UserChat).filter(
+        UserChat.user == rpc.user.name,
+        UserChat.chat == chat_id
+    ))
+
+    assert len(user_chats) == 1
+
+
+def test__generate_token():
+    assert RPC.generate_token("name")
+
+
+def test__generate_name():
+    assert RPC.generate_name()
+
+
+def test__generate_unique_name(rpc):
+    assert rpc.generate_unique_name()
+
+
+def test__generate_unique_token(rpc):
+    assert rpc.generate_unique_token("name")
+
+
+def test__register(rpc):
+    assert rpc.register()
