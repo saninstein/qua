@@ -67,7 +67,8 @@ def test__list_messages(rpc, test_chat_name='chat', test_text='text'):
     chat_id = rpc.create_chat(test_chat_name)
     msg_id = rpc.create_message(chat_id, test_text)
 
-    msg = rpc.list_messages(chat_id)[0]
+    msg = rpc.list_messages(chat_id)[1]  # first message is the system message
+
     assert msg_id == msg['id']
     assert test_text == msg['text']
 
@@ -102,3 +103,16 @@ def test__generate_unique_token(rpc):
 
 def test__register(rpc):
     assert rpc.register()
+
+
+def test__leave_chat(rpc, test_chat_name='chat'):
+    chat_id = rpc.create_chat(test_chat_name)
+    rpc.join_chat(chat_id)
+
+    assert rpc.leave_chat(chat_id)
+    res = list(rpc.session.query(UserChat).filter(
+        UserChat.user == rpc.user.name,
+        UserChat.chat == chat_id
+    ))
+
+    assert not res

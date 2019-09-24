@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = flask.Flask(__name__)
 cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
+# app.config['CORS_HEADERS'] = 'Content-Type'
 app.add_url_rule('/api', view_func=cross_origin()(func.entry_point), methods=["POST"])
 
 

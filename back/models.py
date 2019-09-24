@@ -78,6 +78,7 @@ class Chat(Base, TimeUUIDHashId):
     __tablename__ = 'chats'
 
     name = Column(sqla.String(50), nullable=False)
+    is_private = Column(sqla.Boolean, default=False, nullable=False)
 
 
 class UserChat(Base, TimeUUIDHashId):

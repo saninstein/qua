@@ -15,6 +15,8 @@ from jsonrpc import JSONRPCResponseManager, Dispatcher
 
 from .models import get_session, model_query_to_dicts, User, Chat, UserChat, Message
 
+SYSTEM_USER = "__system"
+
 
 class RPC:
     session: Session = None
@@ -29,7 +31,8 @@ class RPC:
         if db_uri is None:
             db_uri = os.environ.get(
                 'DB_URI',
-                'bigquery://quachat/test_dataset?credentials_path=/home/sanin/pycharm-projects/qua/gcp-auth.json'
+                'sqlite:////home/sanin/pycharm-projects/qua/db.sqlite'
+                # 'bigquery://quachat/test_dataset?credentials_path=/home/sanin/pycharm-projects/qua/gcp-auth.json'
             )
         cls.session: Session = get_session(db_uri, **(engine_kwargs or {}))
         cls.user = cls.get_user(user_token) if user_token else None
@@ -85,6 +88,7 @@ class RPC:
         cls.session.add(UserChat(user=cls.user.name, chat=chat.id))
 
         cls.session.commit()
+        cls.create_message(chat.id, f"Chat {name} created", system=True)
         return chat.id
 
     @classmethod
@@ -99,21 +103,21 @@ class RPC:
         return [chat.to_dict() for chat in chats]
 
     @classmethod
-    def create_message(cls, chat: str, text: str) -> Union[str, Dict]:
+    def create_message(cls, chat: str, text: str, system: bool = False) -> Union[str, Dict]:
         """
         Create message in chat
         :param chat: chat id
         :param text: message text
         :return: message id
         """
-        if not cls.is_user_member(chat):
-            return {"error": "Not Found"}
+        if system:
+            author = SYSTEM_USER
+        else:
+            if not cls.is_user_member(chat):
+                return {"error": "Not Found"}
+            author = cls.user.name
 
-        msg = Message(
-            text=text,
-            chat=chat,
-            author=cls.user.name
-        )
+        msg = Message(text=text, chat=chat, author=author)
         cls.session.add(msg)
         cls.session.commit()
         return msg.id
@@ -153,6 +157,12 @@ class RPC:
         return model_query_to_dicts(cls.session.query(Message).filter(*filters).order_by(Message.created))
 
     @classmethod
+    def search_chats(cls, search_str: str) -> List[Dict]:
+        return model_query_to_dicts(
+            cls.session.query(Chat).filter(Chat.name.startswith(search_str), Chat.name.is_private == False)
+        )
+
+    @classmethod
     def join_chat(cls, chat: str) -> bool:
         """
         Join current user to chat
@@ -161,6 +171,18 @@ class RPC:
         """
         if not cls.is_user_member(chat):
             cls.session.add(UserChat(chat=chat, user=cls.user.name))
+            cls.create_message(chat, f"{cls.user.name} joined the chat", system=True)
+        return True
+
+    @classmethod
+    def leave_chat(cls, chat: str) -> Union[bool, Dict]:
+        if not cls.is_user_member(chat):
+            return {"error": 'not found'}
+
+        for uc in cls.session.query(UserChat).filter(UserChat.user == cls.user.name, UserChat.chat == chat):
+            cls.session.delete(uc)
+
+        cls.create_message(chat, f"{cls.user.name} left the chat", system=True)
         return True
 
     @staticmethod
@@ -222,7 +244,7 @@ class RPC:
         if name is None:
             name = cls.generate_unique_name()
         else:
-            if cls.is_username_used(name):
+            if cls.is_username_used(name) or name == SYSTEM_USER:
                 return {"error": "USERNAME_USED"}
 
         usr = User(
@@ -234,6 +256,12 @@ class RPC:
         cls.session.commit()
         return usr.to_dict()
 
+    @classmethod
+    def get_username(cls):
+        if cls.user:
+            return cls.user.name
+        return None
+
 
 dispatcher = Dispatcher(
     {
@@ -244,7 +272,9 @@ dispatcher = Dispatcher(
             kwargs["chat"], kwargs.get("start"), kwargs.get("end"), kwargs.get("last")
         ),
         "join_chat": RPC.join_chat,
-        "register": RPC.register
+        "register": RPC.register,
+        "search_chats": RPC.search_chats,
+        "get_username": RPC.get_username
     }
 )
 
@@ -261,7 +291,7 @@ def entry_point(request: flask.Request = None):
     if request.method != "POST":
         return "only post"
 
-    RPC.init()
+    RPC.init(user_token=request.headers.get('Authorization'))
     logging.debug(f"Incoming data: {request.data}")
 
     return flask.jsonify(
