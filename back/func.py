@@ -119,7 +119,7 @@ class RPC:
         return msg.id
 
     @classmethod
-    def list_messages(cls, chat: str, start: int = None, end: int =None, last: int = None) -> Union[List[Dict], Dict]:
+    def list_messages(cls, chat: str, start: int = None, end: int = None, last: int = None) -> Union[List[Dict], Dict]:
         """
         Returns chat messages
         :param chat: chat id
