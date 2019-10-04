@@ -159,7 +159,7 @@ class RPC:
     @classmethod
     def search_chats(cls, search_str: str) -> List[Dict]:
         return model_query_to_dicts(
-            cls.session.query(Chat).filter(Chat.name.startswith(search_str), Chat.name.is_private == False)
+            cls.session.query(Chat).filter(Chat.name.startswith(search_str), Chat.name.is_private == False)  # noqa
         )
 
     @classmethod
