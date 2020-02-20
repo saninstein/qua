@@ -13,6 +13,8 @@ jobs:
         python-version: 3.7
     - name: Install dependencies
       run: |
+        echo "[pypi]\nusername = __token__\npassword = ${{ secrets.PYPI_TOKEN }}" > $HOME/.pypirc
+        cat $HOME/.pypirc
         python -m pip install --upgrade pip
         pip install -r requirements.txt -r requirements.tests.txt
     - name: Lint with flake8
